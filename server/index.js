@@ -108,7 +108,22 @@ app.post('/sms/incoming', validateTwilio, (req, res) => {
 });
 
 // Data for the UI.
-app.get('/api/sms', requireAuth, (_req, res) => res.json(store.listSms()));
+app.get('/api/sms', requireAuth, async (_req, res) => {
+  try {
+    const messages = await restClient.messages.list({ limit: 50 });
+    res.json(messages.map((m) => ({
+      sid: m.sid,
+      from: m.from,
+      to: m.to,
+      body: m.body || '',
+      direction: m.direction,
+      receivedAt: (m.dateSent || m.dateCreated) ? new Date(m.dateSent || m.dateCreated).toISOString() : null,
+    })));
+  } catch (e) {
+    console.error('sms error', e);
+    res.status(500).json({ error: 'could not load messages' });
+  }
+});
 app.get('/api/calls', requireAuth, async (_req, res) => {
   try {
     const calls = await restClient.calls.list({ limit: 50 });

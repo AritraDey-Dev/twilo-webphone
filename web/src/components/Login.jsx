@@ -33,7 +33,24 @@ export default function Login({ onLoggedIn }) {
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </label>
         <label>Password
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPw ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              style={{ width: '100%', paddingRight: 40 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              aria-label={showPw ? 'Hide password' : 'Show password'}
+              tabIndex={-1}
+              style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#999', padding: 4 }}
+            >
+              {showPw ? <IconEyeOff /> : <IconEye />}
+            </button>
+          </div>
         </label>
         <button className="btn-call full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
       </form>
