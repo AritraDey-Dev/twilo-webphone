@@ -14,7 +14,11 @@ function read() {
 }
 
 function write(list) {
-  fs.writeFileSync(FILE, JSON.stringify(list, null, 2));
+  try {
+    fs.writeFileSync(FILE, JSON.stringify(list, null, 2));
+  } catch {
+    /* noop */
+  }
 }
 
 function addSms(msg) {

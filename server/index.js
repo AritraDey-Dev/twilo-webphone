@@ -158,4 +158,8 @@ app.get('*', (req, res, next) => {
   res.sendFile(path.join(dist, 'index.html'), (err) => { if (err) next(); });
 });
 
-app.listen(PORT, () => console.log(`Web Phone server → http://localhost:${PORT}`));
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Web Phone server → http://localhost:${PORT}`));
+}
+
+module.exports = app;

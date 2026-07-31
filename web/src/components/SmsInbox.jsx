@@ -9,13 +9,8 @@ export default function SmsInbox() {
 
   useEffect(() => {
     load();
-    const es = new EventSource('/events');
-    es.addEventListener('sms', (e) => {
-      const msg = JSON.parse(e.data);
-      setList((cur) => [msg, ...cur.filter((m) => m.id !== msg.id)]);
-    });
-    es.onerror = () => {};
-    return () => es.close();
+    const id = setInterval(load, 10000);
+    return () => clearInterval(id);
   }, []);
 
   return (

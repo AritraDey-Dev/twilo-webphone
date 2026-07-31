@@ -26,7 +26,7 @@ export default function Login({ onLoggedIn }) {
   return (
     <div className="login-wrap">
       <form className="login" onSubmit={submit}>
-        <div className="login-brand"><img src="/maple-logo.svg" alt="Maple Care" /> <span className="name">Maple Care</span></div>
+        <div className="login-brand"><span className="name">Web Phone</span></div>
         <p className="login-sub">Sign in to your phone line.</p>
         {err && <div className="error">{err}</div>}
         <label>Email

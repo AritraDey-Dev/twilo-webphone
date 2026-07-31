@@ -53,7 +53,7 @@ export default function App() {
     return () => { try { device && device.destroy(); } catch { /* noop */ } };
   }, [authed]);
 
-  if (authed === null) return <div className="boot">Maple Care<span className="blink">_</span></div>;
+  if (authed === null) return <div className="boot">Web Phone<span className="blink">_</span></div>;
   if (!authed) return <Login onLoggedIn={() => window.location.reload()} />;
 
   const startCall = async (number) => {
@@ -71,7 +71,7 @@ export default function App() {
   const logout = async () => { await api.logout(); window.location.reload(); };
 
   const PAGE = {
-    dialer: { title: 'Keypad', sub: 'Place a call from your Maple Care line.' },
+    dialer: { title: 'Keypad', sub: 'Place a call from your line.' },
     sms: { title: 'Messages', sub: 'Incoming text messages.' },
     calls: { title: 'Calls', sub: 'Your recent call activity.' },
   }[tab];
@@ -82,11 +82,7 @@ export default function App() {
       <div className="app">
         <aside className="sidebar">
           <div className="sb-logo">
-            <img src="/maple-logo.svg" alt="Maple Care" />
-            <div>
-              <div className="name">Maple Care</div>
-              <div className="sub">Phone</div>
-            </div>
+            <div className="name">Web Phone</div>
           </div>
 
           <nav className="sb-nav">
