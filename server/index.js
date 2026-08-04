@@ -1,9 +1,19 @@
 require('dotenv').config();
 const path = require('path');
+const { Readable } = require('stream');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
-const { twilio, restClient, mintToken, TWILIO_NUMBER, TWILIO_IDENTITY } = require('./twilio');
+const {
+  twilio,
+  restClient,
+  mintToken,
+  TWILIO_NUMBER,
+  TWILIO_IDENTITY,
+  TWILIO_ACCOUNT_SID,
+  TWILIO_API_KEY_SID,
+  TWILIO_API_KEY_SECRET,
+} = require('./twilio');
 const store = require('./store');
 const events = require('./events');
 
@@ -15,7 +25,12 @@ const {
   VALIDATE_TWILIO = 'false',
   PUBLIC_URL = '',
   TWILIO_AUTH_TOKEN,
+  RECORD_CALLS = 'true',
 } = process.env;
+
+// Recording is opt-out via RECORD_CALLS=false. `record-from-answer-dual` starts the
+// recording once the far end answers and keeps each party on its own channel.
+const recordOpts = RECORD_CALLS === 'false' ? {} : { record: 'record-from-answer-dual' };
 
 const app = express();
 app.set('trust proxy', true);
@@ -77,7 +92,7 @@ app.post('/voice/outgoing', validateTwilio, (req, res) => {
   const twiml = new VoiceResponse();
   const to = (req.body.To || '').trim();
   if (to) {
-    twiml.dial({ callerId: TWILIO_NUMBER }).number(to);
+    twiml.dial({ callerId: TWILIO_NUMBER, ...recordOpts }).number(to);
   } else {
     twiml.say('No destination number was provided.');
   }
@@ -88,7 +103,7 @@ app.post('/voice/outgoing', validateTwilio, (req, res) => {
 app.post('/voice/incoming', validateTwilio, (_req, res) => {
   const VoiceResponse = twilio.twiml.VoiceResponse;
   const twiml = new VoiceResponse();
-  const dial = twiml.dial({ timeout: 20 });
+  const dial = twiml.dial({ timeout: 20, ...recordOpts });
   dial.client(TWILIO_IDENTITY);
   twiml.say('Sorry, no one is available to take your call. Goodbye.');
   res.type('text/xml').send(twiml.toString());
@@ -124,21 +139,71 @@ app.get('/api/sms', requireAuth, async (_req, res) => {
     res.status(500).json({ error: 'could not load messages' });
   }
 });
+// Recordings attach to the leg that ran <Dial>: the PSTN leg on inbound calls, the
+// browser-client parent leg on outbound ones. Index by call SID so either can find it.
+async function recordingsByCallSid(limit = 100) {
+  const recordings = await restClient.recordings.list({ limit });
+  const map = new Map();
+  for (const r of recordings) if (!map.has(r.callSid)) map.set(r.callSid, r);
+  return { recordings, map };
+}
+
 app.get('/api/calls', requireAuth, async (_req, res) => {
   try {
-    const calls = await restClient.calls.list({ limit: 50 });
-    res.json(calls.map(c => ({
-      sid: c.sid,
-      from: c.from,
-      to: c.to,
-      direction: c.direction,
-      status: c.status,
-      duration: c.duration,
-      startTime: c.startTime,
-    })));
+    const [calls, recs] = await Promise.all([
+      restClient.calls.list({ limit: 50 }),
+      // Recordings are a bonus on this view — never fail the history over them.
+      recordingsByCallSid(100).then((r) => r.map).catch(() => new Map()),
+    ]);
+    res.json(calls.map((c) => {
+      const rec = recs.get(c.sid) || (c.parentCallSid ? recs.get(c.parentCallSid) : null);
+      return {
+        sid: c.sid,
+        parentCallSid: c.parentCallSid || null,
+        from: c.from,
+        to: c.to,
+        direction: c.direction,
+        status: c.status,
+        duration: c.duration,
+        startTime: c.startTime,
+        recordingSid: rec ? rec.sid : null,
+      };
+    }));
   } catch (e) {
     console.error('calls error', e);
     res.status(500).json({ error: 'could not load call history' });
+  }
+});
+
+// Twilio's media URL needs API credentials, so stream it through the session instead of
+// handing the browser a signed URL. Range headers pass through so <audio> can seek.
+app.get('/api/recordings/:sid/media', requireAuth, async (req, res) => {
+  const { sid } = req.params;
+  if (!/^RE[0-9a-f]{32}$/i.test(sid)) return res.status(400).json({ error: 'bad recording sid' });
+  try {
+    const auth = Buffer.from(`${TWILIO_API_KEY_SID}:${TWILIO_API_KEY_SECRET}`).toString('base64');
+    const headers = { Authorization: `Basic ${auth}` };
+    if (req.headers.range) headers.Range = req.headers.range;
+    const upstream = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Recordings/${sid}.mp3`,
+      { headers },
+    );
+    if (!upstream.ok && upstream.status !== 206) {
+      return res.status(upstream.status === 404 ? 404 : 502).json({ error: 'recording unavailable' });
+    }
+    res.status(upstream.status);
+    for (const h of ['content-type', 'content-length', 'accept-ranges', 'content-range']) {
+      const v = upstream.headers.get(h);
+      if (v) res.set(h, v);
+    }
+    res.set('Cache-Control', 'private, max-age=3600');
+    if (req.query.download !== undefined) res.set('Content-Disposition', `attachment; filename="${sid}.mp3"`);
+    if (!upstream.body) return res.end();
+    Readable.fromWeb(upstream.body).pipe(res);
+  } catch (e) {
+    console.error('recording media error', e);
+    if (!res.headersSent) res.status(500).json({ error: 'could not load recording audio' });
+    else res.end();
   }
 });
 

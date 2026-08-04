@@ -27,4 +27,13 @@ function mintToken() {
   return { token: token.toJwt(), identity: TWILIO_IDENTITY };
 }
 
-module.exports = { twilio, restClient, mintToken, TWILIO_NUMBER, TWILIO_IDENTITY };
+module.exports = {
+  twilio,
+  restClient,
+  mintToken,
+  TWILIO_NUMBER,
+  TWILIO_IDENTITY,
+  TWILIO_ACCOUNT_SID,
+  TWILIO_API_KEY_SID,
+  TWILIO_API_KEY_SECRET,
+};

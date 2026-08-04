@@ -34,6 +34,18 @@ export const IconLogout = (p) => (
   </svg>
 );
 
+export const IconPlay = (p) => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" {...p}>
+    <path d="M7 4.5v15a1 1 0 0 0 1.54.84l11.5-7.5a1 1 0 0 0 0-1.68L8.54 3.66A1 1 0 0 0 7 4.5z" />
+  </svg>
+);
+
+export const IconStop = (p) => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" {...p}>
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+  </svg>
+);
+
 export const IconBackspace = (p) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />

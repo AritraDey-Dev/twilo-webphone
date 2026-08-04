@@ -152,7 +152,8 @@ body {
 .msg-time { font-size: 10.5px; color: var(--muted); flex-shrink: 0; }
 .msg-body { margin-top: 6px; color: var(--text); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; word-break: break-word; }
 
-.callrow { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; box-shadow: var(--card-shadow); padding: 13px 16px; backdrop-filter: blur(24px); }
+.callrow { position: relative; overflow: hidden; display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; box-shadow: var(--card-shadow); padding: 13px 16px; backdrop-filter: blur(24px); }
+.callrow.playing { border-color: rgba(217, 95, 14, 0.35); }
 .arrow { width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; border-radius: 10px; font-size: 16px; font-weight: 700; }
 .arrow.in { color: var(--success); background: rgba(22, 163, 74, 0.12); }
 .arrow.out { color: var(--flame); background: rgba(217, 95, 14, 0.12); }
@@ -160,6 +161,18 @@ body {
 .callrow-num { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .callrow-sub { font-size: 12px; color: var(--muted); text-transform: capitalize; }
 .callrow-time { font-size: 10.5px; color: var(--muted); flex-shrink: 0; }
+
+/* Recording playback — inline on the call row. */
+.play-btn {
+  flex-shrink: 0; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; cursor: pointer;
+  color: var(--flame); background: rgba(217, 95, 14, 0.1); border: 1px solid rgba(217, 95, 14, 0.28);
+  transition: background .15s, color .15s;
+}
+.play-btn svg { margin-left: 1px; }
+.play-btn:hover { background: rgba(217, 95, 14, 0.18); }
+.play-btn.on { background: var(--flame); border-color: var(--flame); color: #fff; }
+.play-btn.on svg { margin-left: 0; }
+.play-bar { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--flame); transition: width .25s linear; }
 
 /* ── Incoming call overlay ── */
 .ring-overlay {

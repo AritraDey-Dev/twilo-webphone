@@ -19,3 +19,5 @@ export const api = {
   sms: () => req('/api/sms'),
   calls: () => req('/api/calls'),
 };
+
+export const recordingMedia = (sid) => `/api/recordings/${sid}/media`;
