@@ -1,14 +1,16 @@
 # Web Phone
 
-A browser softphone on Twilio — **make calls · receive calls · receive SMS**. React (Vite) + Node/Express.
+A browser softphone on Twilio — **make calls · receive calls · send & receive SMS**. React (Vite) + Node/Express.
 
-Outbound SMS is intentionally left out (it's the only feature needing A2P 10DLC registration). Everything here
-works with **zero compliance paperwork**.
+Voice works with zero compliance paperwork. **Outbound SMS on a US/Canada long code additionally needs
+[A2P 10DLC registration](https://www.twilio.com/docs/messaging/compliance/a2p-10dlc)** — until the number is
+registered, sends fail and Twilio's own error (e.g. `30034`) is shown in the composer.
 
 ## What's inside
-- `server/` — Express: mints Twilio access tokens, serves TwiML for outbound/inbound voice, receives inbound SMS,
-  streams them live (SSE), and lists call history.
-- `web/` — React UI: dialer, incoming-call answer/reject, received-SMS inbox, call history.
+- `server/` — Express: mints Twilio access tokens, serves TwiML for outbound/inbound voice, sends and receives SMS,
+  streams inbound ones live (SSE), and pages through call + message history.
+- `web/` — React UI: dialer, incoming-call answer/reject, SMS composer + threaded history, call history with
+  recording playback. Both history views page through Twilio's full record via cursor pagination.
 
 ## 1. Install
 ```bash
@@ -45,8 +47,10 @@ Once it's working, set `VALIDATE_TWILIO=true` in `.env` to verify webhook signat
 ## 5. Verify (real account)
 - **Make a call** — dial your cell → it rings → answer → two-way audio → Hang Up.
 - **Receive a call** — call your Twilio number → the browser shows *Incoming* → Answer.
-- **Receive SMS** — text your Twilio number → it appears in *Received SMS* live.
-- **Call History** — recent calls populate from Twilio's API.
+- **Receive SMS** — text your Twilio number → it appears in *Messages* live.
+- **Send SMS** — *Messages* → enter an E.164 number + body → Send (needs A2P 10DLC on US/CA long codes).
+- **History** — *Calls* and *Messages* populate from Twilio's API; **Older / Newer** walks back through it a page
+  at a time (the newest page auto-refreshes; paged-back views hold still).
 
 ## Production
 ```bash
