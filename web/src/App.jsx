@@ -6,6 +6,8 @@ import Dialer from "./components/Dialer.jsx";
 import IncomingCall from "./components/IncomingCall.jsx";
 import SmsInbox from "./components/SmsInbox.jsx";
 import CallHistory from "./components/CallHistory.jsx";
+import CallBar from "./components/CallBar.jsx";
+import { useCallTimer } from "./useCallTimer";
 import {
   IconKeypad,
   IconMessage,
@@ -47,6 +49,8 @@ export default function App() {
   const [incoming, setIncoming] = useState(null);
   const [activeCall, setActiveCall] = useState(null);
   const deviceRef = useRef(null);
+  // Above the tabs, so switching views doesn't restart the count.
+  const { startedAt, elapsed } = useCallTimer(activeCall);
 
   useEffect(() => {
     api
@@ -159,7 +163,15 @@ export default function App() {
               </button>
             ))}
           </nav>
-
+          {/* The keypad shows its own live-call strip, so this stands in everywhere else. */}
+          {activeCall && tab !== "dialer" && (
+            <CallBar
+              startedAt={startedAt}
+              elapsed={elapsed}
+              onOpen={() => setTab("dialer")}
+              onHangup={hangup}
+            />
+          )}
           <div className="sb-foot">
             <div className="sb-status">
               {/* `is-` prefixed so a status of "error" can't collide with the .error
@@ -208,6 +220,8 @@ export default function App() {
                 activeCall={activeCall}
                 onHangup={hangup}
                 status={status}
+                startedAt={startedAt}
+                elapsed={elapsed}
               />
             </div>
           )}

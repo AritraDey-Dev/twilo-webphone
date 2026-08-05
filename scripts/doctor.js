@@ -52,8 +52,11 @@ try {
   console.log('\n── live auth check (calls Twilio) ──');
   try {
     const client = twilio(e.TWILIO_API_KEY_SID, e.TWILIO_API_KEY_SECRET, { accountSid: e.TWILIO_ACCOUNT_SID });
-    const acct = await client.api.accounts(e.TWILIO_ACCOUNT_SID).fetch();
-    console.log(`  OK   authenticated — account "${acct.friendlyName}" status: ${acct.status}`);
+    // Probe a subresource, NOT /Accounts/{sid}.json — that endpoint refuses API key auth
+    // with 20003 even when the key is perfectly valid, which reads as a bad secret and
+    // sends you chasing a credential that was never the problem.
+    const calls = await client.calls.list({ limit: 1 });
+    console.log(`  OK   API key authenticated — read ${calls.length} call record`);
   } catch (err) {
     console.log(`  FAIL ${err.code || ''} ${err.message}`);
     if (err.code === 20003) console.log('       → API key SID/secret or account SID is wrong (see the FAILs above).');
